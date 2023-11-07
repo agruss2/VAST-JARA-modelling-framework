@@ -1,8 +1,9 @@
-# README
+# Coupling state-of-the-art modelling tools for better informed Red List assessments of marine fishes
 
-In this repository, you will find all the materials of the VAST-JARA project
+In this repository, you will find the inputs and R codes for the paper titled "Coupling state-of-the-art modelling tools for better informed Red List assessments of marine fishes."
 
 All analyses are conducted within the R software environment. 
+
 
 Please also note the following:
 
