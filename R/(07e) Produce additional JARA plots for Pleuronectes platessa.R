@@ -254,14 +254,26 @@ A1 <- ifelse( criteria == "A1", TRUE, FALSE )
 mu.change <- round( median( change ), 1 )
 sign = ""
 if ( mu.change > 0 ) sign = "+"
-CR <- round( sum( ifelse( change < ifelse( A1, -90, -80 ), 1, 0 ) ) / length( change ) * 100, 1 )
-EN <- round( sum( ifelse( change > ifelse( A1, -90, -80 ) & 
-	change < ifelse( A1, -70, -50 ), 1, 0 ) ) / length( change ) * 100, 1 )
-VU <- round( sum( ifelse( change > ifelse( A1, -70, -50 ) & 
-	change < ifelse( A1, -50,-30 ), 1, 0 ) ) / length( change ) * 100, 1 )
-LC <- round( sum( ifelse( change > -30, 1, 0 ) ) / length( change ) * 100, 1 )
+CR <- sum( ifelse( change <= ifelse( A1, -90, -80 ), 1, 0 ) ) / length( change ) * 100
+EN <- sum( ifelse( change> ifelse( A1, -90, -80 ) & change<= ifelse( A1, -70, -50 ), 1, 0 ) ) / length( change ) * 100
+VU <- sum( ifelse( change> ifelse( A1, -70, -50 ) & change<= ifelse( A1, -50, -30 ), 1, 0 ) ) / length( change ) * 100
+NT <- sum( ifelse( change> ifelse( A1, -50, -30 ) & change<= ifelse( A1, -40, -20 ), 1, 0 ) ) / length( change ) * 100
+LC <- sum( ifelse( change > ifelse( A1, -40, -20 ), 1, 0 ) ) / length( change ) * 100
+old_status <- c( CR, EN, VU, NT, LC )
 Decline <- round( sum( ifelse( change < 0, 1, 0 ) ) / length( change ) * 100, 1 )
-cols <- c( "#60C659", "lightgreen", "#F9E814", "#FC7F3F", "#D81E05" )[c( 1, 3 : 5 )] #### Green to red
+if ( sum( round( old_status, 0 ) ) != 100 ) {
+	CR <- round_realsum( old_status, 0 )[1]
+    	EN <- round_realsum( old_status, 0 )[2]
+    	VU <- round_realsum( old_status, 0 )[3]
+	NT <- round_realsum( old_status, 0 )[4]
+	LC <- round_realsum( old_status, 0 )[5]
+} else{
+    	CR <- round( CR, 0 )
+    	EN <- round( EN, 0 )
+    	VU <- round( VU, 0 )
+    	if ( NT_opt == TRUE ) { NT = round( NT, 0 ) }
+    	LC <- round( LC, 0 )
+}
 xlim <- c( -100, min( max( 30, quantile( change, .99 ) ), 1000 ) )
 ylim <- c( 0, max( y1 * ylimadj ) )
 new.graph( 0.5 )
@@ -270,25 +282,29 @@ par( mar = c( 4.5, 4.5, 1, 1 ) )
 plot( x1, y1, type = "n", xlim = xlim, ylim = ylim, ylab = ylab, xlab = xlab,
 	cex.main = 0.9, frame = TRUE, xaxt = "n", yaxt = "n", xaxs = "i", yaxs = "i" )
 maxy <- max( ylim )
-x2 <- c( ifelse( A1, -50, -30 ), 1500 ); y2 <- c( 0, 5 )
-polygon( c( x2, rev( x2 ) ), c( rep( maxy, 2 ), rev( rep( 0, 2 ) ) ), col = cols[1], border = cols[1] )
-x3 <- c( ifelse( A1, -70, -50 ), x2[1] )
-polygon( c( x3, rev( x3 ) ), c( rep( maxy, 2 ), rev( rep( 0, 2 ) ) ), col = cols[2], border = cols[2] )
-x4 <- c( ifelse( A1, -90, -80 ), x3[1] )
-polygon( c( x4, rev( x4 ) ), c( rep( maxy, 2 ), rep( 0, 2 ) ), col = cols[3], border = cols[3] )
-x5 <- c( -100, x4[1] )
-polygon( c( x5, rev( x5 ) ), c( rep( maxy, 2 ), rep( 0, 2 ) ), col = cols[4], border = cols[4] )
+x2 <- c( ifelse( A1, -40, -20 ), 1500 ); y2 = c( 0, 5 )
+polygon( c( x2, rev( x2 ) ), c( rep( maxy, 2 ), rev( rep( 0, 2 ) ) ), col = "#60C659", border = "#60C659" ) 
+x3 <- c( ifelse( A1, -50, -30 ), x2[1] )
+polygon( c( x3, rev( x3 ) ), c( rep( maxy, 2 ), rev( rep( 0, 2 ) ) ), col = "#CCE226", border="#CCE226" ) 
+x4 <- c( ifelse( A1, -70, -50 ), x3[1] )
+polygon( c( x4, rev( x4 ) ), c( rep( maxy, 2 ), rev( rep( 0, 2 ) ) ), col = "#F9E814", border = "#F9E814" )
+x5 <- c( ifelse( A1, -90, -80 ), x4[1] )
+polygon( c( x5, rev( x5 ) ), c( rep( maxy, 2 ), rep( 0, 2 ) ), col = "#FC7F3F", border = "#FC7F3F" )
+x6 <- c( -100, x5[1] )
+polygon( c( x6, rev( x6 ) ), c( rep( maxy, 2 ), rep( 0, 2 ) ), col = "#D81E05", border = "#D81E05" )
 polygon( c( x1, rev( x1 ) ), c( y1, rep( 0, length( y1 ) ) ), col = "grey" )
+box()    
 axis( 1, at = seq( -100, max( x1, 30 ) + 50, ifelse( max( x1, 30 ) > 150, 50, 25 ) ),
 	tick = seq( -100, max( x1, 30 ), ifelse( max( x1, 30 ) > 150, 50, 25 ) ) )
-legend( "right", c( paste0( "CR (",CR, "%)" ), paste0( "EN (", EN, "%)" ),
-	paste0( "VU (", VU, "%)" ), paste0( "LC (", LC, "%)" ) ),
-	col = 1, pt.bg = c( "red", "orange", "yellow", "green" ), pt.cex = 1.2, pch = 22,
-	bg = "white", cex = legend.cex, y.intersp = 0.8, x.intersp = 0.8 )
+legend( "right", c( paste0( "CR (",CR,"%)" ), paste0( "EN (",EN,"%)" ),
+	paste0( "VU (",VU,"%)" ), paste0( "NT (",NT,"%)" ), paste0( "LC (",LC,"%)" ) ),
+	col = 1, pt.bg = c( "#D81E05", "#FC7F3F", "#F9E814", "#CCE226", "#60C659" ), pt.cex = 1.3, pch = 22,
+	bg = "white",cex = legend.cex + .3, y.intersp = 0.8, x.intersp = 0.8 )
+abline( v = mu.change, lty = 2, col = 'grey30', lwd = 2 ) 
 text( ifelse( mean( change ) < -80, -80, mean( change ) ), max( y1 * 1.05 ),
 	paste0( "  Change: ", sign, mu.change, "%" ), bg = "white", cex = legend.cex + 0.1 )
 SavePlot( paste0( "\\", species, "\\", species, "_IUCN posterior plot under ICUN Criterion A2" ) )
-graphics.off()    
+graphics.off()   
 
 ######## Do some extra hindcasting
 hc <- jara_hindcast( jarainput, peels = 0 : 10, save.jarafile = F )
@@ -355,7 +371,7 @@ ymax <- max( ymax1, ymax2 )
 ylim <- c( -100, min( max( 30, ymax ), 1000 ) )
 xlim <- c( 0.5, length( hc$peels ) + 0.49 )
 xall <- hc$posteriors$pop.change
-cols <- c( "#60C659", "lightgreen", "#F9E814", "#FC7F3F", "#D81E05" )[c( 1, 3 : 5 )] #### Green to red
+cols <- rev( c( "#D81E05", "#FC7F3F", "#F9E814", "#CCE226", "#60C659" ) )
 new.graph( 0.5 )
 par( cex = 1.5 )
 par( mar = c( 4.5, 4.5, 1, 3 ) )
@@ -373,35 +389,51 @@ for ( j in 1 : length( runs ) ) {
       den <- stats::density( change, adjust = 1 )
 	y1 <- den$x
       x1 <- den$y / max( den$y ) + j - 0.5
-	categories <- c( "Pr.Decl", "change3GL", "CR", "EN", "VU", "LC" )  
-      CR <- round( sum( ifelse( change < ifelse( A1, -90, -80 ), 1, 0 ) ) / length( change ) * 100, 1 )
-      EN <- round( sum( ifelse( change> ifelse( A1, -90, -80 ) & 
-		change < ifelse( A1, -70, -50 ), 1, 0 ) ) / length( change ) * 100, 1 )
-      VU <- round( sum( ifelse( change > ifelse( A1, -70, -50 ) & 
-		change < ifelse( A1, -50, -30 ), 1, 0 ) ) / length( change ) * 100, 1 )
-      LC <- round( sum( ifelse( change> -30, 1, 0 ) ) / length( change ) * 100, 1 )
+	CR <- sum( ifelse( change <= ifelse( A1, -90, -80 ), 1, 0 ) ) / length( change ) * 100
+	EN <- sum( ifelse( change> ifelse( A1, -90, -80 ) & change<= ifelse( A1, -70, -50 ), 1, 0 ) ) / length( change ) * 100
+	VU <- sum( ifelse( change> ifelse( A1, -70, -50 ) & change<= ifelse( A1, -50, -30 ), 1, 0 ) ) / length( change ) * 100
+	NT <- sum( ifelse( change> ifelse( A1, -50, -30 ) & change<= ifelse( A1, -40, -20 ), 1, 0 ) ) / length( change ) * 100
+	LC <- sum( ifelse( change > ifelse( A1, -40, -20 ), 1, 0 ) ) / length( change ) * 100
+	old_status <- c( CR, EN, VU, NT, LC )
+	Decline <- round( sum( ifelse( change < 0, 1, 0 ) ) / length( change ) * 100, 1 )
+	if ( sum( round( old_status, 0 ) ) != 100 ) {
+		CR <- round_realsum( old_status, 0 )[1]
+    		EN <- round_realsum( old_status, 0 )[2]
+    		VU <- round_realsum( old_status, 0 )[3]
+		NT <- round_realsum( old_status, 0 )[4]
+		LC <- round_realsum( old_status, 0 )[5]
+	} else{
+    		CR <- round( CR, 0 )
+    		EN <- round( EN, 0 )
+    		VU <- round( VU, 0 )
+    		if ( NT_opt == TRUE ) { NT = round( NT, 0 ) }
+    		LC <- round( LC, 0 )
+	}
       Change3xGL <- round( median( change ), 3 )
-      percentages <- c( CR, EN, VU, LC )
+      percentages <- c( CR, EN, VU, NT, LC )
       status <- ifelse( which( percentages == max( percentages ) ) == 4 & 
 		max( percentages ) < 50, "NT", categories[3 : 6][which( percentages == max( percentages ) ) ] )
-      out <- rbind( out, data.frame( Year = max( hc$yr ) - rev( runs )[j], Change3xGL, CR, EN, VU, LC, status ) )
-	lc <- c( ifelse( A1, -50, -30 ) )
+	out <- rbind( out, data.frame( Year = max( hc$yr ) - rev( runs )[j], Change3xGL, CR, EN, VU, LC, status ) )
+	lc <- c( ifelse( A1, -40, -30 ) )
       polygon( c( x1[y1 >= lc], rep( min( x1 ), length( y1[y1 >= lc] ) ) ),
 		c( y1[y1 >= lc], rev( y1[y1 >= lc] ) ), col = cols[1], border = cols[1] )
+	nt <- c( ifelse( A1, -50, -30 ) )
+      polygon( c( x1[y1 <= lc & y1 >= nt], rep( min( x1 ), length( y1[y1 <= lc & y1 >= nt] ) ) ), 
+		c( y1[y1 < lc & y1 >= nt], rev( y1[y1 < lc & y1 >= nt] ) ), col = cols[2], border = cols[2] )
       vu <- c( ifelse( A1, -70, -50 ) )
-      polygon( c( x1[y1 <= lc & y1 >= vu], rep( min( x1 ), length( y1[y1 <= lc & y1 >= vu] ) ) ), 
-		c( y1[y1 < lc & y1 >= vu], rev( y1[y1 < lc & y1 >= vu] ) ), col = cols[2], border = cols[2] )
+      polygon( c( x1[y1 <= nt & y1 >= vu], rep( min( x1 ), length( y1[y1 <= nt & y1 >= vu] ) ) ), 
+		c( y1[y1 < nt & y1 >= vu], rev( y1[y1 < nt & y1 >= vu] ) ), col = cols[3], border = cols[3] )
       en <- ifelse( A1, -90, -80 )
       polygon( c( x1[y1 < vu & y1 >= en], rep( min( x1 ), length( y1[y1 < vu & y1 >= en] ) ) ),
-		c( y1[y1 < vu & y1 >= en], rev( y1[y1 < vu & y1 >= en] ) ), col = cols[3], border = cols[3] )
+		c( y1[y1 < vu & y1 >= en], rev( y1[y1 < vu & y1 >= en] ) ), col = cols[4], border = cols[4] )
       polygon( c( x1[y1 < en], rep( min( x1 ), length( y1[y1 < en] ) ) ),
-		c( y1[y1 < en], rev( y1[y1 < en] ) ), col = cols[4], border = cols[4] )
+		c( y1[y1 < en], rev( y1[y1 < en] ) ), col = cols[5], border = cols[5] )
       polygon( c( x1, rep( min( x1 ), length( x1 ) ) ), c( y1, rev( y1 ) ) )
 }
 abline( h = 0, lty = 2 )
 text( 1 : length( runs ), par( 'usr' )[4], ( out$status ), cex = 0.8, pos = 1, offset = 0.2 )
 legend( par('usr' )[2] * 1.01, quantile( par( 'usr' )[3 : 4], 0.6 ), bty = 'n', xpd = NA,
-	c( "LC", "VU", "EN", "CR" ), pch = 15, col = c( cols ), pt.cex = 2, cex = 0.9 )
+	c( "LC", "NT", "VU", "EN", "CR" ), pch = 15, col = c( cols ), pt.cex = 2, cex = 0.9 )
 SavePlot( paste0( "\\", species, "\\", species, "_Retrospective IUCN posterior plot under IUCN Criterion A2" ) )
 graphics.off()
 
